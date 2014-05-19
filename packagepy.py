@@ -53,9 +53,10 @@ def notBuiltInModules(script_path):
             pythonpaths.add(path)
     system_paths = []
     for p in sys.path[1:]:
-        if path not in pythonpaths:
-            system_paths.append(path)
-    #~ print "system paths:", "; ".join(system_paths)
+        # RAY: this is a hack to detect system paths, had to patch this
+        if p not in pythonpaths and 'site-packages' not in p:
+            system_paths.append(p)
+    # print "system paths:", "; ".join(system_paths)
 
     finder = modulefinder.ModuleFinder()
     finder.run_script(script_path)
@@ -66,12 +67,14 @@ def notBuiltInModules(script_path):
         # The _bisect module has __file__ = None
         if not hasattr(module, "__file__") or module.__file__ is None:
             # Skip built-in modules
+            #print 'skipping: ' + name 
             continue
 
         system_module = False
         for system_path in system_paths:
             if module.__file__.startswith(system_path):
                 system_module = True
+                #print 'system: ' + module.__file__
                 break
         if system_module:
             continue
@@ -79,6 +82,10 @@ def notBuiltInModules(script_path):
         # Skip the script
         if name == "__main__":
             assert module.__file__ == script_path
+            continue
+
+        if not module.__file__.endswith('.py'):
+            print 'Skipping non-python file: ' + module.__file__
             continue
 
         relative_path = name.replace('.', '/')
@@ -134,3 +141,4 @@ if __name__ == "__main__":
 
     main(script_path, output_path)
     sys.exit(0)
+
