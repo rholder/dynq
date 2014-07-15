@@ -1,5 +1,5 @@
-PYTHON_EXECUTABLE=dynamo_ftw.py
-FINAL_EXECUTABLE=dynamo-ftw
+PYTHON_EXECUTABLE=dynq.py
+FINAL_EXECUTABLE=dynq
 BUILD_DIR=build
 
 .PHONY: all clean

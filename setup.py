@@ -1,16 +1,14 @@
 #!/usr/bin/env python
-import sys
-
 from setuptools import setup
 
-requires = ['boto==2.28.0',
-            'click==0.7']
+requirements_lines = [line.strip() for line in open('requirements.txt').readlines()]
+requires = list(filter(None, requirements_lines))
 
-py_modules = ['dynamo_ftw']
+py_modules = ['dynq']
 packages = []
 
 setup_options = dict(
-    name='dynamo_ftw',
+    name='dynq',
     version='0.1.0',
     description='Simple standalone DynamoDB client',
     author='Ray Holder',
