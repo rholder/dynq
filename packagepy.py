@@ -128,6 +128,7 @@ def main(script_path, output_path):
     # hack to explicitly add boto/endpoints.json
     boto = __import__('boto', globals(), locals(), [], -1)
     not_builtin.append((os.path.dirname(boto.__file__) + '/endpoints.json', 'boto/endpoints.json'))
+    not_builtin.append((os.path.dirname(boto.__file__) + '/cacerts/cacerts.txt', 'boto/cacerts/cacerts.txt'))
 
     for source_path, relative_destination_path in not_builtin:
         outzip.write(source_path, relative_destination_path)
