@@ -71,31 +71,40 @@ def clean_ca_certs(ca_cert_filename):
 
 @click.command()
 @click.option('--aws-access-key-id', metavar='AWS_ACCESS_KEY_ID',
-              help="This is the AWS access key id.",
+              help="This is the AWS access key id, defaults to environment variable AWS_ACCESS_KEY_ID.",
               default=os.getenv('AWS_ACCESS_KEY_ID'))
 @click.option('--aws-secret-access-key', metavar='AWS_SECRET_ACCESS_KEY',
-              help="This is the AWS secret access key.",
+              help="This is the AWS secret access key, defaults to environment variable AWS_SECRET_ACCESS_KEY.",
               default=os.getenv('AWS_SECRET_ACCESS_KEY'))
 @click.option('--region', metavar='REGION',
-              help='The AWS region (e.g. us-east-1).',
+              help='The AWS region, defaults to us-east-1',
               default='us-east-1')
-@click.option('--table-name', metavar='TABLE_NAME',
-              help='The target table to query.',
-              required=True)
-@click.option('--query', metavar='QUERY',
-              help='The query to run on the target table.',
-              required=False)
-@click.option('--key-value', metavar='KEY_VALUE',
-              help='The query to run on the target table of the form key=value, (converted to {key:value}).',
-              required=False)
 @click.option('--output-json', metavar='OUTPUT_JSON', is_flag=True,
-              help='Output the returned key/values as JSON.',
+              help='Output the returned key/values as JSON',
               required=False,
               default=False)
-@click.version_option(__version__)
+@click.option('--table-name', metavar='TABLE_NAME',
+              help='The target table to query',
+              required=True)
+@click.option('--query', metavar='QUERY',
+              help='The query to run on the target table in raw JSON',
+              required=False)
+@click.option('--key-value', metavar='KEY_VALUE',
+              help='The query to run on the target table of the form key=value, (converted to {key:value})',
+              required=False)
+@click.version_option(__version__ + ", boto version " + boto.__version__)
 def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, output_json):
     """
     dynq - 0.1.0 - a simple DynamoDB client that just works
+
+    \b
+    Examples:
+      dynq --table-name deployment --key-value environment=gozer-dev
+      dynq --output-json --table-name deployment --key-value environment=gozer-prod
+      dynq --output-json --table-name deployment --query '{"environment":"gozer-potato"}'
+
+    \b
+    Check https://github.com/rholder/dynq for the latest release and project updates.
     """
 
     # TODO make this a validator callback
@@ -109,7 +118,7 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
         kv = key_value.split('=')
         query_value = {kv[0]: kv[1]}
     else:
-        query_value = query
+        query_value = json.loads(query)
 
     connection = boto.dynamodb2.connect_to_region(
         region,
