@@ -1,16 +1,18 @@
 import atexit
 import json
 import os
-import sys
 import tempfile
 import zipfile
 
 import boto
+
 import click
 from boto.dynamodb2.table import Table
 
+
 __version__ = '0.1.0'
 
+# set this environment variable to True to print debugging information for boto
 DYNQ_DEBUG = os.getenv("DYNQ_DEBUG", False)
 
 # this is the default calculated endpoint path from boto
@@ -63,7 +65,9 @@ def patch_ca_certs():
 
 
 def clean_ca_certs(ca_cert_filename):
+    """Delete the temporary cacerts.txt file"""
     os.remove(ca_cert_filename)
+
 
 @click.command()
 @click.option('--aws-access-key-id', metavar='AWS_ACCESS_KEY_ID',
@@ -88,40 +92,43 @@ def clean_ca_certs(ca_cert_filename):
               help='Output the returned key/values as JSON.',
               required=False,
               default=False)
-@click.option('--verbose', metavar='verbose', is_flag=True,
-              help="Print the version and header info.", default=False)
 @click.version_option(__version__)
-def main(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, verbose, output_json):
-    if key_value is None and query is None:
-        raise click.ClickException("Missing --query or --key-value parameter")
+def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, output_json):
+    """
+    dynq - 0.1.0 - a simple DynamoDB client that just works
+    """
 
-    if verbose:
-        click.echo('dynq - ' + __version__ + " - A simple DynamoDB client that just works.")
-        click.echo('boto ' + boto.__version__)
-        click.echo()
+    # TODO make this a validator callback
+    if key_value is None and query is None:
+        raise click.BadParameter("Missing --query or --key-value parameter")
 
     patch_ca_certs()
-    connection = boto.dynamodb2.connect_to_region(
-        region,
-        aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key
-    )
 
+    # TODO add more validation to input key=value format
     if key_value is not None:
         kv = key_value.split('=')
         query_value = {kv[0]: kv[1]}
     else:
         query_value = query
 
-    try:
-        run_query(connection, table_name, query_value, output_json)
-        return 0
-    except:
-        click.echo(sys.exc_info()[1])
-        return 1
+    connection = boto.dynamodb2.connect_to_region(
+        region,
+        aws_access_key_id=aws_access_key_id,
+        aws_secret_access_key=aws_secret_access_key
+    )
+    run_query(connection, table_name, query_value, output_json)
 
 
 def run_query(connection, table_name, query_value, output_json):
+    """
+    Run the given query against DynamoDB.
+
+    :param connection: a DynamoDB connection object to use
+    :param table_name: the table name to query
+    :param query_value: the query to issue to DynamoDB, should be in JSON format
+    :param output_json: whether we should try to output the result in JSON instead of shell
+    :return: content for the given query, if it exists
+    """
     if DYNQ_DEBUG:
         boto.set_stream_logger('boto')
 
@@ -134,6 +141,4 @@ def run_query(connection, table_name, query_value, output_json):
 
 
 if __name__ == "__main__":
-    # TODO why are these error codes broken?
-    sys.exit(main())
-
+    cli()
