@@ -32,6 +32,42 @@ sudo curl -o /usr/local/bin/dynq -L "https://github.com/rholder/dynq/releases/do
 sudo chmod +x /usr/local/bin/dynq
 ```
 
+##Examples
+Here's a minimal example of sourcing directly into the current shell from DynamoDB:
+```bash
+#!/usr/bin/env bash
+
+set -o nounset
+
+# source the content of all of our key/values
+source <(dynq --table-name deployment --key-value environment=new_york)
+
+# do something with the variables
+echo ${CROSS_STREAMS}
+```
+
+Here's a more debuggable example of sourcing some environment variables from
+DynamoDB into a temporary file first:
+
+```bash
+#!/usr/bin/env bash
+
+set -o nounset
+
+# write out the content of all of our key/values to a tmp file
+DYNQ_SOURCE=$(mktemp)
+dynq --table-name deployment --key-value environment=new_york > ${DYNQ_SOURCE}
+
+# bring in all of the fetched variables to the current shell
+source ${DYNQ_SOURCE}
+
+# do something with the variables
+echo ${CROSS_STREAMS}
+
+# clean up when all is well at the end
+rm ${DYNQ_SOURCE}
+```
+
 ##License
 The `dynq` project is released under version 2.0 of the
 [Apache License](http://www.apache.org/licenses/LICENSE-2.0).
