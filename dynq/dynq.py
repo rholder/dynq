@@ -1,4 +1,4 @@
-## Copyright 2014 Ray Holder
+## Copyright 2014-2016 Ray Holder
 ##
 ## Licensed under the Apache License, Version 2.0 (the "License");
 ## you may not use this file except in compliance with the License.
@@ -12,75 +12,16 @@
 ## See the License for the specific language governing permissions and
 ## limitations under the License.
 
-import atexit
 import json
 import os
-import tempfile
-import zipfile
-
-import boto
+import sys
 
 import click
-from boto.dynamodb2.table import Table
 
-
-__version__ = '0.1.0'
+__version__ = '0.2.0-dev'
 
 # set this environment variable to True to print debugging information for boto
 DYNQ_DEBUG = os.getenv("DYNQ_DEBUG", False)
-
-# this is the default calculated endpoint path from boto
-DEFAULT_ENDPOINTS_PATH = os.path.join(os.path.dirname(boto.__file__), 'endpoints.json')
-
-
-def load_endpoint_json(path):
-    """
-    Loads a given JSON file & returns it. Handle being inside of an egg.
-
-    :param path: The path to the JSON file
-    :type path: string
-
-    :returns: The loaded data
-    """
-    if DEFAULT_ENDPOINTS_PATH == path:
-        # default is inside the egg now, so load from there
-        egg_path = os.path.dirname(__file__)
-        with zipfile.ZipFile(egg_path, 'r') as egg_file:
-            return json.load(egg_file.open('boto/endpoints.json', 'r'))
-    else:
-        # it was overridden
-        with open(path, 'r') as endpoints_file:
-            return json.load(endpoints_file)
-
-# monkeypatch the original load to handle being inside of an eggsecutable
-boto.regioninfo.load_endpoint_json = load_endpoint_json
-
-
-def patch_ca_certs():
-    """
-    Boto needs an actual file path for the cacerts.txt so we extract it from
-    inside the egg. If it's been overridden by Boto's 'ca_certificates_file'
-    setting then just skip this patch.
-    """
-
-    # skip this if user overrides ca_certificates_file
-    detected_ca = boto.config.get('Boto', 'ca_certificates_file')
-    if detected_ca is None:
-        egg_path = os.path.dirname(__file__)
-        with zipfile.ZipFile(egg_path, 'r') as egg_file:
-            cert_file = tempfile.NamedTemporaryFile(prefix='cacerts', delete=False)
-            cert_file.write(egg_file.open('boto/cacerts/cacerts.txt').read())
-            cert_file.close()
-
-            if not boto.config.has_section('Boto'):
-                boto.config.add_section('Boto')
-            boto.config.set('Boto', 'ca_certificates_file', cert_file.name)
-            atexit.register(clean_ca_certs, cert_file.name)
-
-
-def clean_ca_certs(ca_cert_filename):
-    """Delete the temporary cacerts.txt file"""
-    os.remove(ca_cert_filename)
 
 
 @click.command()
@@ -106,10 +47,10 @@ def clean_ca_certs(ca_cert_filename):
 @click.option('--key-value', metavar='KEY_VALUE',
               help='The query to run on the target table of the form key=value, (converted to {key:value})',
               required=False)
-@click.version_option(__version__ + ", boto version " + boto.__version__)
+@click.version_option(__version__)
 def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, output_json):
     """
-    dynq - 0.1.0 - a simple DynamoDB client that just works
+    dynq - 0.2.0 - a simple DynamoDB client that just works
 
     \b
     Examples:
@@ -125,28 +66,30 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
     if key_value is None and query is None:
         raise click.BadParameter("Missing --query or --key-value parameter")
 
-    patch_ca_certs()
+    import dynq.boto_monkey
+    import boto3
 
     # TODO add more validation to input key=value format
     if key_value is not None:
         kv = key_value.split('=')
-        query_value = {kv[0]: kv[1]}
+        query_value = { kv[0]: { 'S': kv[1]} }
     else:
         query_value = json.loads(query)
 
-    connection = boto.dynamodb2.connect_to_region(
-        region,
+    client = boto3.client(
+        'dynamodb',
+        region_name=region,
         aws_access_key_id=aws_access_key_id,
         aws_secret_access_key=aws_secret_access_key
     )
-    run_query(connection, table_name, query_value, output_json)
+    run_query(client, table_name, query_value, output_json)
 
 
-def run_query(connection, table_name, query_value, output_json):
+def run_query(client, table_name, query_value, output_json):
     """
     Run the given query against DynamoDB.
 
-    :param connection: a DynamoDB connection object to use
+    :param connection: a DynamoDB client object to use
     :param table_name: the table name to query
     :param query_value: the query to issue to DynamoDB, should be in JSON format
     :param output_json: whether we should try to output the result in JSON instead of shell
@@ -155,12 +98,17 @@ def run_query(connection, table_name, query_value, output_json):
     if DYNQ_DEBUG:
         boto.set_stream_logger('boto')
 
-    items = Table(table_name, connection=connection).get_item(**query_value)
+    response = client.get_item(TableName=table_name, Key=query_value)
+    if 'Item' not in response:
+        click.echo(err=True, message='No such item found for: ' + str(query_value))
+        sys.exit(1)
+
     if output_json:
-        click.echo(json.dumps(items._data))
+        click.echo(json.dumps(response))
     else:
-        for field, value in items.items():
-            click.echo(field + "=" + value)
+        key_values = response['Item'].items()
+        for field, value in key_values:
+            click.echo('{}={}'.format(field, value['S']))
 
 
 if __name__ == "__main__":
