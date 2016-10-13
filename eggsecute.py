@@ -36,8 +36,9 @@ def collect_module_files(module_name, relative_path_in_module):
             file_data.append((file_path, target_path))
     return file_data
 
+
 def collect_single_module_file(module_name):
-    """Return a list of tuples of (absolute_file_path, zip_target_path)"""
+    """Return a list of tuples of (absolute_file_path, zip_target_path) for a single module file, like six"""
     loaded_module = __import__(module_name, globals(), locals(), [], 0)
     module_file = loaded_module.__file__
     file_path = os.path.basename(module_file)
