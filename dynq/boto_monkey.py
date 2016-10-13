@@ -1,3 +1,17 @@
+## Copyright 2016 Ray Holder
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+## http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+
 import atexit
 import codecs
 import json
@@ -172,9 +186,3 @@ if EGG:
     botocore.loaders.Loader.load_data = load_data
     botocore.loaders.Loader.list_available_services = list_available_services
     botocore.loaders.Loader.list_api_versions = list_api_versions
-
-# dynamically imported from boto3, they need to be here so packagepy can detect them and walk the dependency graph
-import boto3.s3
-import boto3.s3.inject
-import boto3.ec2.createtags
-import boto3.ec2.deletetags
