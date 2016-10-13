@@ -1,2 +1,3 @@
-boto==2.31.1
-click==2.1
+boto3==1.3.0
+botocore==1.4.10
+click==6.6

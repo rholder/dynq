@@ -4,12 +4,12 @@ from setuptools import setup
 requirements_lines = [line.strip() for line in open('requirements.txt').readlines()]
 requires = list(filter(None, requirements_lines))
 
-py_modules = ['dynq']
+py_modules = ['dynq.dynq', 'dynq.boto_monkey']
 packages = []
 
 setup_options = dict(
     name='dynq',
-    version='0.1.0',
+    version='0.2.0',
     description='Simple standalone DynamoDB client',
     author='Ray Holder',
     author_email='',

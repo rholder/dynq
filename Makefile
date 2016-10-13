@@ -1,27 +1,30 @@
-PYTHON_EXECUTABLE=dynq.py
+PYTHON_MAIN=dynq/dynq.py
 FINAL_EXECUTABLE=dynq
 BUILD_DIR=build
+PYTHON_INTERPRETER=python3
 
-.PHONY: all clean
+.PHONY: all clean build
 
-all: clean package
+all: clean build
 
 clean:
-	@rm -rfv $(BUILD_DIR)
-	@rm -rfv *.pyc
+	@rm -rf *.pyc
+	@echo "Project .pyc's removed."
+	@rm -rf $(BUILD_DIR)
+	@echo "Build directory removed."
 
-package: create_virtualenv
+build: build/_virtualenv
 	@rm -f $(BUILD_DIR)/$(FINAL_EXECUTABLE)
-	@sh -c '. $(BUILD_DIR)/_virtualenv/bin/activate; python packagepy.py $(PYTHON_EXECUTABLE) $(BUILD_DIR)/$(FINAL_EXECUTABLE)'
+	@sh -c '. $(BUILD_DIR)/_virtualenv/bin/activate; $(PYTHON_INTERPRETER) eggsecute.py $(PYTHON_MAIN) $(BUILD_DIR)/$(FINAL_EXECUTABLE)'
 	@chmod a+x $(BUILD_DIR)/$(FINAL_EXECUTABLE)
-	@echo Package created.
+	@echo "Package created."
 
-create_virtualenv:
+build/_virtualenv:
 	@command -v virtualenv >/dev/null 2>&1 || { echo >&2 "This build requires virtualenv to be installed.  Aborting."; exit 1; }
 	@mkdir -p $(BUILD_DIR)
 	@if [ -d $(BUILD_DIR)/_virtualenv ]; then \
 		echo "Existing virtualenv found. Skipping virtualenv creation."; \
 	else \
-		virtualenv $(BUILD_DIR)/_virtualenv; \
+		virtualenv -p `which $(PYTHON_INTERPRETER)` $(BUILD_DIR)/_virtualenv; \
 		sh -c '. $(BUILD_DIR)/_virtualenv/bin/activate; pip install .'; \
 	fi
