@@ -138,7 +138,7 @@ def list_api_versions(self, service_name: str, type_name: str):
     """
     known_api_versions = set()
     for api_path in EGG_API_PATHS:
-        if service_name in api_path:
+        if service_name in api_path.split('/'):
             api_version = api_path.replace('botocore/data/', '').replace('boto3/data/', '').split('/')
             if len(api_version) == 2:
                 full_path = os.path.join(api_path, type_name)
