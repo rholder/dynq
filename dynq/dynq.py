@@ -56,7 +56,7 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
     Examples:
       dynq --table-name deployment --key-value environment=gozer-dev
       dynq --output-json --table-name deployment --key-value environment=gozer-prod
-      dynq --output-json --table-name deployment --query '{"environment":"gozer-potato"}'
+      dynq --output-json --table-name deployment --query '{"environment":{ "S":"gozer-potato"}}'
 
     \b
     Check https://github.com/rholder/dynq for the latest release and project updates.
