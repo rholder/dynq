@@ -43,7 +43,7 @@ class JSONFileLoader2(object):
     This class can load the default format of models, which is a JSON file.
 
     """
-    def exists(self, file_path: str):
+    def exists(self, file_path):
         """Checks if the file exists.
 
         :type file_path: str
@@ -57,7 +57,7 @@ class JSONFileLoader2(object):
         return any(x.startswith("%s" % file_path) for x in EGG.namelist())
 
 
-    def load_file(self, file_path: str):
+    def load_file(self, file_path):
         """Attempt to load the file path.
 
         :type file_path: str
@@ -99,7 +99,7 @@ def load_data(self, name):
 
 
 @botocore.loaders.instance_cache
-def list_available_services(self, type_name: str):
+def list_available_services(self, type_name):
     """List all known services.
     :type type_name: str
     :param type_name: The type of the service (service-2,
@@ -125,7 +125,7 @@ def list_available_services(self, type_name: str):
 
 
 @botocore.loaders.instance_cache
-def list_api_versions(self, service_name: str, type_name: str):
+def list_api_versions(self, service_name, type_name):
     """List all API versions available for a particular service type
         :type service_name: str
         :param service_name: The name of the service

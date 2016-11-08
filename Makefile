@@ -1,7 +1,7 @@
 PYTHON_MAIN=dynq/dynq.py
 FINAL_EXECUTABLE=dynq
 BUILD_DIR=build
-PYTHON_INTERPRETER=python3
+PYTHON_INTERPRETER=python
 
 .PHONY: all clean build
 

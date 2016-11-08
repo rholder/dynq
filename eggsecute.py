@@ -53,7 +53,7 @@ def main(script_path, output_path):
 
     # tack Python header onto a file, zip file parsers ignore everything up until PK magic string
     outfile = open(output_path, 'w+b')
-    outfile.write(b"#!/usr/bin/env python3\n")
+    outfile.write(b"#!/usr/bin/env python\n")
 
     # make sure we flush, since we'll be writing zip data right after this
     outfile.flush()
