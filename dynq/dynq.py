@@ -18,10 +18,7 @@ import sys
 
 import click
 
-__version__ = '0.2.0-dev'
-
-# set this environment variable to True to print debugging information for boto
-DYNQ_DEBUG = os.getenv("DYNQ_DEBUG", False)
+__version__ = '0.2.0'
 
 
 @click.command()
@@ -45,10 +42,19 @@ DYNQ_DEBUG = os.getenv("DYNQ_DEBUG", False)
               help='The query to run on the target table in raw JSON',
               required=False)
 @click.option('--key-value', metavar='KEY_VALUE',
-              help='The query to run on the target table of the form key=value, (converted to {key:value})',
+              help='The query to run on the target table of the form key=value, (converted to {"key":{"S":"value"}})',
               required=False)
+@click.option('--metadata-service-timeout', metavar='AWS_METADATA_SERVICE_TIMEOUT',
+              help='The number of seconds until we time out a request to the instance metadata service',
+              required=False,
+              default=3)
+@click.option('--metadata-service-num-attempts', metavar='AWS_METADATA_SERVICE_NUM_ATTEMPTS',
+              help='Number of attempts until we give up fetching from the instance metadata service',
+              required=False,
+              default=10)
 @click.version_option(__version__)
-def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, output_json):
+def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key_value, output_json,
+    metadata_service_timeout, metadata_service_num_attempts):
     """
     dynq - 0.2.0 - a simple DynamoDB client that just works
 
@@ -68,6 +74,7 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
 
     import dynq.boto_monkey
     import boto3
+    import botocore.session
 
     # TODO add more validation to input key=value format
     if key_value is not None:
@@ -76,12 +83,29 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
     else:
         query_value = json.loads(query)
 
-    client = boto3.client(
-        'dynamodb',
-        region_name=region,
+    # pulled directly from botocore:
+    env_vars = {
+        # This is the number of seconds until we time out a request to
+        # the instance metadata service.
+        'metadata_service_timeout': (
+            'metadata_service_timeout',
+            'AWS_METADATA_SERVICE_TIMEOUT', metadata_service_timeout, int),
+        # This is the number of request attempts we make until we give
+        # up trying to retrieve data from the instance metadata service.
+        'metadata_service_num_attempts': (
+            'metadata_service_num_attempts',
+            'AWS_METADATA_SERVICE_NUM_ATTEMPTS', metadata_service_num_attempts, int),
+    }
+
+    # mash these custom values into the session 
+    botocore_session = botocore.session.get_session(env_vars)
+    boto3_session = boto3.session.Session(
         aws_access_key_id=aws_access_key_id,
-        aws_secret_access_key=aws_secret_access_key
+        aws_secret_access_key=aws_secret_access_key,
+        region_name=region,
+        botocore_session=botocore_session
     )
+    client = boto3_session.client('dynamodb')
     run_query(client, table_name, query_value, output_json)
 
 
@@ -95,8 +119,6 @@ def run_query(client, table_name, query_value, output_json):
     :param output_json: whether we should try to output the result in JSON instead of shell
     :return: content for the given query, if it exists
     """
-    if DYNQ_DEBUG:
-        boto.set_stream_logger('boto')
 
     response = client.get_item(TableName=table_name, Key=query_value)
     if 'Item' not in response:
