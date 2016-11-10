@@ -1,4 +1,4 @@
-[![Latest Version](http://img.shields.io/badge/latest-0.1.0-brightgreen.svg)](https://github.com/rholder/dynq/releases/tag/v0.1.0) [![License](http://img.shields.io/badge/license-apache%202-brightgreen.svg)](https://github.com/rholder/dynq/blob/master/LICENSE)
+[![Latest Version](http://img.shields.io/badge/latest-0.2.0-brightgreen.svg)](https://github.com/rholder/dynq/releases/tag/v0.2.0) [![License](http://img.shields.io/badge/license-apache%202-brightgreen.svg)](https://github.com/rholder/dynq/blob/master/LICENSE)
 
 ##What is this?
 `dynq`, short for DynamoDB Query, is a commandline client for pulling data out of DynamoDB. Its primary function is to
@@ -28,7 +28,7 @@ If `dynq` fails in any way, it should raise a non-zero exit code on termination.
 `dynq` is just a single binary that you can drop anywhere you feel like on a *nix based system (sorry Windows, maybe
 it works with Cygwin...). As long as you have Python 2.6 or above installed, you can install it with:
 ```
-sudo curl -o /usr/local/bin/dynq -L "https://github.com/rholder/dynq/releases/download/v0.1.0/dynq" && \
+sudo curl -o /usr/local/bin/dynq -L "https://github.com/rholder/dynq/releases/download/v0.2.0/dynq" && \
 sudo chmod +x /usr/local/bin/dynq
 ```
 
