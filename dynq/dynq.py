@@ -97,7 +97,7 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
             'AWS_METADATA_SERVICE_NUM_ATTEMPTS', metadata_service_num_attempts, int),
     }
 
-    # mash these custom values into the session 
+    # mash these custom values into the session
     botocore_session = botocore.session.get_session(env_vars)
     boto3_session = boto3.session.Session(
         aws_access_key_id=aws_access_key_id,
@@ -106,10 +106,10 @@ def cli(aws_access_key_id, aws_secret_access_key, region, table_name, query, key
         botocore_session=botocore_session
     )
     client = boto3_session.client('dynamodb')
-    run_query(client, table_name, query_value, output_json)
+    run_query(client, table_name, query_value, output_json, key_value=key_value)
 
 
-def run_query(client, table_name, query_value, output_json):
+def run_query(client, table_name, query_value, output_json, key_value=None):
     """
     Run the given query against DynamoDB.
 
@@ -128,8 +128,12 @@ def run_query(client, table_name, query_value, output_json):
     if output_json:
         click.echo(json.dumps(response))
     else:
-        key_values = response['Item'].items()
-        for field, value in key_values:
+        key_values = dict(response['Item'].items())
+        if key_value is not None:
+            key, _ = key_value.split('=', 1)
+            click.echo('{}={}'.format(key, key_values[key]['S']))
+            key_values.pop(key)
+        for field, value in key_values.items():
             click.echo('{}={}'.format(field, value['S']))
 
 
