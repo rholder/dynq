@@ -130,7 +130,11 @@ def run_query(client, table_name, query_value, output_json):
     else:
         key_values = response['Item'].items()
         for field, value in key_values:
-            click.echo('{}={}'.format(field, value['S']))
+            if value:
+                for value_type in value.keys():
+                    click.echo('{}={}'.format(field, value[value_type]))
+            else:
+                click.echo('{}=None'.format(field))
 
 
 if __name__ == "__main__":
