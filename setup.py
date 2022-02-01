@@ -9,7 +9,7 @@ packages = []
 
 setup_options = dict(
     name='dynq',
-    version='0.2.0',
+    version='0.2.1',
     description='Simple standalone DynamoDB client',
     author='Ray Holder',
     author_email='',
